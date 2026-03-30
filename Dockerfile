@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
@@ -16,4 +17,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 RUN mkdir -p wwwroot/uploads/assignments wwwroot/uploads/notes wwwroot/uploads/pastquestions
-ENTRYPOINT ["dotnet", "CompSci.dll"]
+ENTRYPOINT ASPNETCORE_URLS=http://+:${PORT:-8080} dotnet CompSci.dll
