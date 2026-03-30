@@ -25,11 +25,12 @@ var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CompSci API V1");
+    c.RoutePrefix = "swagger"; // access via /swagger
+});
 
 app.UseCors("AllowAll");
 app.UseStaticFiles();
