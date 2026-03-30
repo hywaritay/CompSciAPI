@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/out/
+**/.vs/
+**/.idea/
+**/.vscode/
+**/Migrations/
+**/wwwroot/uploads/
+Dockerfile
+docker-compose*.yml
+.dockerignore
+.git
+.gitignore
+*.md
+*.sln.DotSettings.user
