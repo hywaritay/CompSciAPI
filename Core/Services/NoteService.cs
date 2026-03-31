@@ -2,6 +2,7 @@ using CompSci.Core.DTOs;
 using CompSci.Core.Entities;
 using CompSci.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace CompSci.Core.Services;
 
@@ -9,11 +10,13 @@ public class NoteService : INoteService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ILogger<NoteService> _logger;
 
-    public NoteService(IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
+    public NoteService(IUnitOfWork unitOfWork, IFileStorageService fileStorageService, ILogger<NoteService> logger)
     {
         _unitOfWork = unitOfWork;
         _fileStorageService = fileStorageService;
+        _logger = logger;
     }
 
     public async Task<NoteResponse> CreateAsync(NoteRequest request, IFormFile file)
@@ -110,6 +113,12 @@ public class NoteService : INoteService
     {
         var note = await _unitOfWork.Notes.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Note with ID {id} not found.");
+
+        _logger.LogInformation("Download request for note {Id}. DB FilePath: {FilePath}, OriginalFileName: {FileName}",
+            id, note.FilePath, note.OriginalFileName);
+
+        if (string.IsNullOrWhiteSpace(note.FilePath))
+            throw new InvalidOperationException("No file is attached to this note.");
 
         if (!_fileStorageService.FileExists(note.FilePath))
             throw new FileNotFoundException("File not found on disk.");

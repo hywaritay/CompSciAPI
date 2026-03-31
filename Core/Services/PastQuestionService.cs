@@ -2,6 +2,7 @@ using CompSci.Core.DTOs;
 using CompSci.Core.Entities;
 using CompSci.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace CompSci.Core.Services;
 
@@ -9,11 +10,13 @@ public class PastQuestionService : IPastQuestionService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ILogger<PastQuestionService> _logger;
 
-    public PastQuestionService(IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
+    public PastQuestionService(IUnitOfWork unitOfWork, IFileStorageService fileStorageService, ILogger<PastQuestionService> logger)
     {
         _unitOfWork = unitOfWork;
         _fileStorageService = fileStorageService;
+        _logger = logger;
     }
 
     public async Task<PastQuestionResponse> CreateAsync(PastQuestionRequest request, IFormFile file)
@@ -110,6 +113,12 @@ public class PastQuestionService : IPastQuestionService
     {
         var pastQuestion = await _unitOfWork.PastQuestions.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Past question with ID {id} not found.");
+
+        _logger.LogInformation("Download request for past question {Id}. DB FilePath: {FilePath}, OriginalFileName: {FileName}",
+            id, pastQuestion.FilePath, pastQuestion.OriginalFileName);
+
+        if (string.IsNullOrWhiteSpace(pastQuestion.FilePath))
+            throw new InvalidOperationException("No file is attached to this past question.");
 
         if (!_fileStorageService.FileExists(pastQuestion.FilePath))
             throw new FileNotFoundException("File not found on disk.");

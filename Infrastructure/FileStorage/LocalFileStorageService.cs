@@ -1,6 +1,7 @@
 using CompSci.Core.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Logging;
 
 namespace CompSci.Infrastructure.FileStorage;
 
@@ -9,12 +10,16 @@ public class LocalFileStorageService : IFileStorageService
     private readonly string _basePath;
     private readonly string _contentRootPath;
     private readonly FileExtensionContentTypeProvider _contentTypeProvider;
+    private readonly ILogger<LocalFileStorageService> _logger;
 
-    public LocalFileStorageService(IWebHostEnvironment env)
+    public LocalFileStorageService(IWebHostEnvironment env, ILogger<LocalFileStorageService> logger)
     {
         _contentRootPath = env.ContentRootPath;
         _basePath = Path.Combine(env.ContentRootPath, "wwwroot", "uploads");
         _contentTypeProvider = new FileExtensionContentTypeProvider();
+        _logger = logger;
+
+        _logger.LogInformation("FileStorage initialized - ContentRootPath: {ContentRootPath}, BasePath: {BasePath}", _contentRootPath, _basePath);
 
         if (!Directory.Exists(_basePath))
             Directory.CreateDirectory(_basePath);
@@ -92,6 +97,10 @@ public class LocalFileStorageService : IFileStorageService
             filePath.Replace("\\", "/")
         );
 
-        return File.Exists(combinedPath);
+        var exists = File.Exists(combinedPath);
+        if (!exists)
+            _logger.LogWarning("File not found on disk. FilePath: {FilePath}, ResolvedPath: {ResolvedPath}", filePath, combinedPath);
+
+        return exists;
     }
 }

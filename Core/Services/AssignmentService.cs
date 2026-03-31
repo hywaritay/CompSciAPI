@@ -2,6 +2,7 @@ using CompSci.Core.DTOs;
 using CompSci.Core.Entities;
 using CompSci.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace CompSci.Core.Services;
 
@@ -9,11 +10,13 @@ public class AssignmentService : IAssignmentService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ILogger<AssignmentService> _logger;
 
-    public AssignmentService(IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
+    public AssignmentService(IUnitOfWork unitOfWork, IFileStorageService fileStorageService, ILogger<AssignmentService> logger)
     {
         _unitOfWork = unitOfWork;
         _fileStorageService = fileStorageService;
+        _logger = logger;
     }
 
     public async Task<AssignmentResponse> CreateAsync(AssignmentRequest request, IFormFile file)
@@ -116,6 +119,9 @@ public class AssignmentService : IAssignmentService
     {
         var assignment = await _unitOfWork.Assignments.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Assignment with ID {id} not found.");
+
+        _logger.LogInformation("Download request for assignment {Id}. DB FilePath: {FilePath}, OriginalFileName: {FileName}",
+            id, assignment.FilePath, assignment.OriginalFileName);
 
         if (string.IsNullOrWhiteSpace(assignment.FilePath))
             throw new InvalidOperationException("No file is attached to this assignment.");
